@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('credit_cards', function (Blueprint $table) {
-            $table->increments('id');
-            $table->foreignId('user_id');
+            $table->increments('id'); // $table->id();
+            $table->foreignId('user_id'); // foreign id was not added
             $table->string('card_number');
             $table->string('expiration_date');
             $table->string('cvv');

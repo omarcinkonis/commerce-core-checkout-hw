@@ -2,20 +2,21 @@
 
 namespace App\Jobs;
 
+use App\Models\Order;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Inertia\Inertia;
-use Mail;
+use Inertia\Inertia; // unused import
+use Mail; // undefined class, correct import should be use Illuminate\Support\Facades\Mail;
 use App\Mail\TestEmail;
 
 class ProcessEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    
+
     protected $userId;
 
     public function __construct($userId)
@@ -24,15 +25,23 @@ class ProcessEmail implements ShouldQueue
     }
 
     /*
-     * Prepares Order data and sends it via email   
+     * Prepares Order data and sends it via email
     */
     public function handle(): void
     {
+        // non-standard approach
+        // these queries showcase that you don't understand how Laravel query builders work
+        // DB::table('orders')->where('user_id', '=', $this->userId)->get();
+        // or
+        // Order::where('user_id', '=', $this->userId)->get();
+        // read this if you want to know more:
+        // https://devsenv.com/tutorials/laravel-eloquent-vs-db-query-builder-performance-and-other-statistics
       $orders = DB::select('select * from orders where user_id="'. $this->userId . '"');
       $users = DB::select('select * from users where id="'. $this->userId . '"');
       $addresses = DB::select('select * from adresses where user_id="'. $this->userId . '"');
       $credit_cards = DB::select('select * from credit_cards where user_id="'. $this->userId . '"');
 
+      // extract to separate methods, this code is not maintainable
       $products = array();
       foreach($orders as $order) {
         $product = DB::select('select * from product where' . ' id=' . $order->product_id);
@@ -45,6 +54,7 @@ class ProcessEmail implements ShouldQueue
             ]);
       }
 
+      // use DTO pattern if you need complex data structures
      $completeOrder = array(
          "firstName" => $users[0]->first_name,
          "lastName" => $users[0]->last_name,
@@ -73,9 +83,9 @@ class ProcessEmail implements ShouldQueue
          "quantity" => $product["quantity"],
       ];
 
-      
+
         $total += $product["quantity"] * $product["price"];
-    } 
+    }
 
         $completeOrder["order"]["totalPrice"] = $total;
 

@@ -21,12 +21,16 @@ class OrderController extends Controller
       return Inertia::render('Checkout');
    }
    /*
-    * Takes in product order and form input values, validates input values, populates database tables and send out an email with all order data  
+    * Takes in product order and form input values, validates input values, populates database tables and send out an email with all order data
+    *
+    * Does not follow single-responsibility principle, all the things you listed should be done in separate methods
+    * This is an api method. It should be in a separate controller, dedicated for api actions specifically
    */
-   public function createOrder(Request $request) {
-      
+   public function createOrder(Request $request) { // missing return type
+
       $requestData = json_decode($request->data, true); //makes an associative array
 
+       // do not validate in controller, use form request
       $validator = Validator::make($requestData, [
          'firstName' => 'required|string|max:20|regex:/^[a-zA-ZČčĘęĖėĮįŠšŲųŪūŽž]+$/',
          'lastName' => 'required|string|max:20|regex:/^[a-zA-ZČčĘęĖėĮįŠšŲųŪūŽž]+$/',
@@ -43,9 +47,10 @@ class OrderController extends Controller
       if ($validator->fails()) {
          return response()->json(['error' => $validator->errors()], 422);
      }
-      
+
       $order = json_decode($request->data); //makes an object
 
+       // use services
       $user = User::create([
          'first_name' => $order->firstName,
          'last_name' => $order->lastName,
@@ -74,7 +79,10 @@ class OrderController extends Controller
             ]);
       }
 
+      // not sure, maybe it was required in task, but what is the point of delay here?
       ProcessEmail::dispatch($user->id)->delay(now()->addMinutes(5));
+
+      // missing return
    }
 
    public function viewOrderConfirmation(Request $request): Response {
